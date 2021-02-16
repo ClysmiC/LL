@@ -17,13 +17,6 @@
 // Options:
 //  -define ALS_ASSERT before including to get runtime asserts
 //
-//
-//
-//
-//
-//
-//
-//
 
 
 // NOTE - Null indicates an empty list. For non-empty lists, the end is indicated by a
@@ -49,14 +42,14 @@
         uintptr_t offset;                       \
     };                                          \
     
-#define LL1Type(type, linkMember) LL1_##type##_##linkMember
+#define LL1Type(userId) LL1_##userId
         
-#define DefineLL1(type, linkMember)                                 \
-    struct LL1_##type##_##linkMember                                \
+#define DefineLL1(type, linkMember, userId)                         \
+    struct LL1_##userId                                             \
     {                                                               \
         struct type * pHead;                                        \
         struct type * pTail;                                        \
-        static const uintptr_t offset = offsetof(type, linkMember); \
+        enum Offset { offset = offsetof(type, linkMember) };        \
     };
 
 
@@ -94,94 +87,94 @@
 
     
 #define LL1IsNodeLinked(node)                   \
-        (node.pNext != nullptr)
+    (node.pNext != nullptr)
 
 
     
 #define LL1AddHead_(type, ppListHead, ppListTail, listOffset, pItem)    \
-        do {                                                            \
-            if (LL1IsItemLinked_(type, pItem, listOffset))              \
-            {                                                           \
-                LL_ASSERT(false);                                       \
-                break;                                                  \
-            }                                                           \
-            auto * itemNode_ = LL1NodePtr_(type, pItem, listOffset);    \
-            if (*ppListHead)                                            \
-            {                                                           \
-                itemNode_->pNext = *ppListHead;                         \
-            }                                                           \
-            else                                                        \
-            {                                                           \
-                itemNode_->pNext = (type *)LLEndOfList_;                \
-                *ppListTail = pItem;                                    \
-            }                                                           \
-            *ppListHead = pItem;                                        \
-        } while(0)
+    do {                                                                \
+        if (LL1IsItemLinked_(type, pItem, listOffset))                  \
+        {                                                               \
+            LL_ASSERT(false);                                           \
+            break;                                                      \
+        }                                                               \
+        auto * itemNode_ = LL1NodePtr_(type, pItem, listOffset);        \
+        if (*ppListHead)                                                \
+        {                                                               \
+            itemNode_->pNext = *ppListHead;                             \
+        }                                                               \
+        else                                                            \
+        {                                                               \
+            itemNode_->pNext = (type *)LLEndOfList_;                    \
+            *ppListTail = pItem;                                        \
+        }                                                               \
+        *ppListHead = pItem;                                            \
+    } while(0)
 
-            #define LL1AddHead(type, list, pItem)                               \
-                LL1AddHead_(type, &list.pHead, &list.pTail, list.offset, pItem)
+#define LL1AddHead(type, list, pItem)                               \
+    LL1AddHead_(type, &list.pHead, &list.pTail, list.offset, pItem)
 
 #define LL1RefAddHead(type, listRef, pItem)                             \
-            LL1AddHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
+    LL1AddHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
 
 #define LL1Add(type, list, pItem)               \
-            LL1AddHead(type, list, pItem)
+    LL1AddHead(type, list, pItem)
 
 #define LL1RefAdd(type, listRef, pItem)         \
-            LL1RefAddHead(type, listRef, pItem)
+    LL1RefAddHead(type, listRef, pItem)
 
 
 
 #define LL1AddTail_(type, ppListHead, ppListTail, listOffset, pItem)    \
-            do {                                                        \
-                if (LL1IsItemLinked_(type, pItem, listOffset))          \
-                {                                                       \
-                    LL_ASSERT(false);                                   \
-                    break;                                              \
-                }                                                       \
-                auto * itemNode_ = LL1NodePtr_(type, pItem, listOffset); \
-                if (*ppListTail)                                        \
-                {                                                       \
-                    LL1NodePtr_(type, *ppListTail, listOffset)->pNext = pItem; \
-                }                                                       \
-                else                                                    \
-                {                                                       \
-                    *ppListHead = pItem;                                \
-                }                                                       \
-                itemNode_->pNext = (type *)LLEndOfList_;                \
-                *ppListTail = pItem;                                    \
-            } while(0)
+    do {                                                                \
+        if (LL1IsItemLinked_(type, pItem, listOffset))                  \
+        {                                                               \
+            LL_ASSERT(false);                                           \
+            break;                                                      \
+        }                                                               \
+        auto * itemNode_ = LL1NodePtr_(type, pItem, listOffset);        \
+        if (*ppListTail)                                                \
+        {                                                               \
+            LL1NodePtr_(type, *ppListTail, listOffset)->pNext = pItem;  \
+        }                                                               \
+        else                                                            \
+        {                                                               \
+            *ppListHead = pItem;                                        \
+        }                                                               \
+        itemNode_->pNext = (type *)LLEndOfList_;                        \
+        *ppListTail = pItem;                                            \
+    } while(0)
 
-                #define LL1AddTail(type, list, pItem)                               \
-                    LL1AddTail_(type, &list.pHead, &list.pTail, list.offset, pItem)
+#define LL1AddTail(type, list, pItem)                               \
+    LL1AddTail_(type, &list.pHead, &list.pTail, list.offset, pItem)
 
 #define LL1RefAddTail(type, listRef, pItem)                             \
-                LL1AddTail_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
+    LL1AddTail_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
 
 
 
 #define LL1RemoveHead_(type, ppListHead, ppListTail, listOffset, pAssignTo) \
-                do {                                                    \
-                    type * headToRemove_ = *ppListHead;                 \
-                    pAssignTo = headToRemove_;                          \
-                    if (headToRemove_)                                  \
-                    {                                                   \
-                        auto * headToRemoveNode_ = LL1NodePtr_(type, headToRemove_, listOffset); \
-                        if (headToRemoveNode_->pNext != (type *)LLEndOfList_) \
-                        {                                               \
-                            *ppListHead = headToRemoveNode_->pNext;     \
-                        }                                               \
-                        else                                            \
-                        {                                               \
-                            *ppListHead = nullptr;                      \
-                            *ppListTail = nullptr;                      \
-                        }                                               \
-                        headToRemoveNode_->pNext = nullptr;             \
-                    }                                                   \
-                } while (0)
+    do {                                                                \
+        type * headToRemove_ = *ppListHead;                             \
+        pAssignTo = headToRemove_;                                      \
+        if (headToRemove_)                                              \
+        {                                                               \
+            auto * headToRemoveNode_ = LL1NodePtr_(type, headToRemove_, listOffset); \
+            if (headToRemoveNode_->pNext != (type *)LLEndOfList_)       \
+            {                                                           \
+                *ppListHead = headToRemoveNode_->pNext;                 \
+            }                                                           \
+            else                                                        \
+            {                                                           \
+                *ppListHead = nullptr;                                  \
+                *ppListTail = nullptr;                                  \
+            }                                                           \
+            headToRemoveNode_->pNext = nullptr;                         \
+        }                                                               \
+    } while (0)
 
-                    #define LL1RemoveHead(type, list, pAssignTo)                            \
-LL1RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
+#define LL1RemoveHead(type, list, pAssignTo)                            \
+    LL1RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
 
 #define LL1RefRemoveHead(type, listRef, pAssignTo)                      \
     LL1RemoveHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pAssignTo)
@@ -231,7 +224,7 @@ LL1RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
 
 
 
-#define LL1ClearWithoutUnlinking_(type, ppListHead, ppListTail)     \
+#define LL1ClearWithoutUnlinking_(type, ppListHead, ppListTail) \
     do { *ppListHead = nullptr; *ppListTail = nullptr; } while (0)
 
 #define LL1ClearWithoutUnlinking(type, list)                    \
@@ -290,47 +283,45 @@ LL1RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
         uintptr_t offset;                       \
     }
     
-#define LL2Type(type, linkMember) LL2_##type##_##linkMember
+#define LL2Type(userId) LL2_##userId
         
-#define DefineLL2(type, linkMember)                                     \
-        struct LL2_##type##_##linkMember                                \
+#define DefineLL2(type, linkMember, userId)                             \
+        struct LL2_##userId                                             \
         {                                                               \
             struct type * pHead;                                        \
             struct type * pTail;                                        \
             static const uintptr_t offset = offsetof(type, linkMember); \
         };                                                              \
 
-
-
 #define LL2MakeRef(listRefPtr, list)            \
-        do {                                    \
-            (listRefPtr)->ppHead = &list.pHead; \
-            (listRefPtr)->ppTail = &list.pTail; \
-            (listRefPtr)->offset = list.offset; \
-        } while(0)
+    do {                                        \
+        (listRefPtr)->ppHead = &list.pHead;     \
+        (listRefPtr)->ppTail = &list.pTail;     \
+        (listRefPtr)->offset = list.offset;     \
+    } while(0)
 
 
 
-#define LL2NodePtr_(type, pItem, listOffset)                        \
-        ((type::LL2Node *)((unsigned char * )pItem + listOffset))
+#define LL2NodePtr_(type, pItem, listOffset)                    \
+    ((type::LL2Node *)((unsigned char * )pItem + listOffset))
 
 #define LL2NodePtr(type, list, pItem)           \
-        LL2NodePtr_(type, pItem, list.offset)
+    LL2NodePtr_(type, pItem, list.offset)
 
-#define LL2RefNodePtr(type, listRef, pItem)         \
-        LL2NodePtr_(type, pItem, listRef.offset)
+#define LL2RefNodePtr(type, listRef, pItem)     \
+    LL2NodePtr_(type, pItem, listRef.offset)
 
 
-#define LL2IsItemLinked_(type, pItem, listOffset)                   \
-        (LL2NodePtr_(type, pItem, listOffset)->pPrev != nullptr)
+#define LL2IsItemLinked_(type, pItem, listOffset)               \
+    (LL2NodePtr_(type, pItem, listOffset)->pPrev != nullptr)
 
 // NOTE - It's possible for an item to be linked, but not necessarily be a part of this list (i.e., there are multiple heads that all
 //  use the same nodes as links and items can only be on one list). Querying this would require O(n) search.
-#define LL2IsItemLinked(type, list, pItem)          \
-        LL2IsItemLinked_(type, pItem, list.offset)
+#define LL2IsItemLinked(type, list, pItem)      \
+    LL2IsItemLinked_(type, pItem, list.offset)
 
-#define LL2RefIsItemLinked(type, listRef, pItem)        \
-        LL2IsItemLinked_(type, pItem, listRef.offset)
+#define LL2RefIsItemLinked(type, listRef, pItem)    \
+    LL2IsItemLinked_(type, pItem, listRef.offset)
 
 
     
@@ -360,117 +351,146 @@ LL1RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
         *ppListHead = pItem;                                            \
     } while(0)
 
-#define LL2AddHead(type, list, pItem)                                   \
-        LL2AddHead_(type, &list.pHead, &list.pTail, list.offset, pItem)
+#define LL2AddHead(type, list, pItem)                               \
+    LL2AddHead_(type, &list.pHead, &list.pTail, list.offset, pItem)
 
 #define LL2RefAddHead(type, listRef, pItem)                             \
-        LL2AddHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
+    LL2AddHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
 
 #define LL2Add(type, list, pItem)               \
-        LL2AddHead(type, list, pItem)
+    LL2AddHead(type, list, pItem)
 
 #define LL2RefAdd(type, listRef, pItem)         \
-        LL2RefAddHead(type, listRef, pItem)
+    LL2RefAddHead(type, listRef, pItem)
 
 
 
 // TODO - LL2IsItemLinked check will break if linked to a separate list that uses the same node?
 //  What is the desired behavior in this case?
 #define LL2AddTail_(type, ppListHead, ppListTail, listOffset, pItem)    \
-        do {                                                            \
+    do {                                                                \
+        if (LL2IsItemLinked_(type, pItem, listOffset))                  \
+        {                                                               \
+            LL_ASSERT(false);                                           \
+            break;                                                      \
+        }                                                               \
+        auto * itemNode_ = LL2NodePtr_(type, pItem, listOffset);        \
+        if (*ppListTail)                                                \
+        {                                                               \
+            LL2NodePtr_(type, *ppListTail, listOffset)->pNext = pItem;  \
+            itemNode_->pPrev = *ppListTail;                             \
+        }                                                               \
+        else                                                            \
+        {                                                               \
+            itemNode_->pPrev = (type *)LLEndOfList_;                    \
+            *ppListHead = pItem;                                        \
+        }                                                               \
+        itemNode_->pNext = (type *)LLEndOfList_;                        \
+        *ppListTail = pItem;                                            \
+    } while(0)
+
+#define LL2AddTail(type, list, pItem)                               \
+    LL2AddTail_(type, &list.pHead, &list.pTail, list.offset, pItem)
+
+#define LL2RefAddTail(type, listRef, pItem)                             \
+    LL2AddTail_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
+
+    
+
+#define LL2Remove_(type, ppListHead, ppListTail, listOffset, pItem)     \
+    do {                                                                \
+        auto * node_ = LL2NodePtr_(type, pItem, listOffset);            \
+        if (!LL2IsItemLinked_(type, pItem, listOffset)) break;          \
+        type * pPrev_ = node_->pPrev;                                   \
+        type * pNext_ = node_->pNext;                                   \
+        bool hasNext_ = pNext_ != (type *)LLEndOfList_;                 \
+        bool hasPrev_ = pPrev_ != (type *)LLEndOfList_;                 \
+        if (hasNext_ && hasPrev_)                                       \
+        {                                                               \
+            LL2NodePtr_(type, pNext_, listOffset)->pPrev = pPrev_;      \
+            LL2NodePtr_(type, pPrev_, listOffset)->pNext = pNext_;      \
+        }                                                               \
+        else if (hasNext_ && !hasPrev_)                                 \
+        {                                                               \
+            LL2NodePtr_(type, pNext_, listOffset)->pPrev = (type *)LLEndOfList_; \
+            *ppListHead = pNext_;                                       \
+        }                                                               \
+        else if (!hasNext_ && hasPrev_)                                 \
+        {                                                               \
+            LL2NodePtr_(type, pPrev_, listOffset)->pNext = (type *)LLEndOfList_; \
+            *ppListTail = pPrev_;                                       \
+        }                                                               \
+        else                                                            \
+        {                                                               \
+            *ppListHead = nullptr;                                      \
+            *ppListTail = nullptr;                                      \
+        }                                                               \
+        node_->pPrev = nullptr;                                         \
+        node_->pNext = nullptr;                                         \
+    } while(0)
+
+#define LL2Remove(type, list, pItem)                                \
+    LL2Remove_(type, &list.pHead, &list.pTail, list.offset, pItem)
+
+#define LL2RefRemove(type, listRef, pItem)                              \
+    LL2Remove_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
+
+
+
+#define LL2InsertBefore_(type, ppListHead, ppListTail, listOffset, pItem, pItemNext) \
+    do {                                                                \
+        if (!pItemNext) LL2AddTail_(type, ppListHead, ppListTail, listOffset, pItem); \
+        else if (pItemNext == *ppListHead) LL2AddHead_(type, ppListHead, ppListTail, listOffset, pItem); \
+        else {                                                          \
             if (LL2IsItemLinked_(type, pItem, listOffset))              \
             {                                                           \
                 LL_ASSERT(false);                                       \
                 break;                                                  \
             }                                                           \
-            auto * itemNode_ = LL2NodePtr_(type, pItem, listOffset);    \
-            if (*ppListTail)                                            \
+            auto * node = LL2NodePtr_(type, pItem, listOffset);         \
+            auto * nextNode = LL2NodePtr_(type, pItemNext, listOffset); \
+            auto * pItemPrev = LL2Prev_(type, pItemNext, listOffset);   \
+            auto * prevNode = LL2NodePtr_(type, pItemPrev, listOffset); \
+            prevNode->pNext = pItem;                                    \
+            nextNode->pPrev = pItem;                                    \
+            node->pNext = pItemNext;                                    \
+            node->pPrev = pItemPrev;                                    \
+        }                                                               \
+    } while(0)
+
+#define LL2InsertBefore(type, list, pItem, pItemNext)                   \
+    LL2InsertBefore_(type, &list.pHead, &list.pTail, list.offset, pItem, pItemNext)
+
+#define LL2RefInsertBefore(type, listRef, pItem, pItemNext)             \
+    LL2InsertBefore_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem, pItemNext)
+
+      
+
+#define LL2RemoveHead_(type, ppListHead, ppListTail, listOffset, pAssignTo) \
+    do {                                                                \
+        type * headToRemove_ = *ppListHead;                             \
+        pAssignTo = headToRemove_;                                      \
+        if (headToRemove_)                                              \
+        {                                                               \
+            auto * headToRemoveNode_ = LL2NodePtr_(type, headToRemove_, listOffset); \
+            if (headToRemoveNode_->pNext != (type *)LLEndOfList_)       \
             {                                                           \
-                LL2NodePtr_(type, *ppListTail, listOffset)->pNext = pItem; \
-                itemNode_->pPrev = *ppListTail;                         \
+                *ppListHead = headToRemoveNode_->pNext;                 \
+                auto * newHeadNode_ = LL2NodePtr_(type, *ppListHead, listOffset); \
+                newHeadNode_->pPrev = (type *)LLEndOfList_;              \
             }                                                           \
             else                                                        \
             {                                                           \
-                itemNode_->pPrev = (type *)LLEndOfList_;                \
-                *ppListHead = pItem;                                    \
+                *ppListHead = nullptr;                                  \
+                *ppListTail = nullptr;                                  \
             }                                                           \
-            itemNode_->pNext = (type *)LLEndOfList_;                    \
-            *ppListTail = pItem;                                        \
-        } while(0)
+            headToRemoveNode_->pNext = nullptr;                         \
+            headToRemoveNode_->pPrev = nullptr;                         \
+        }                                                               \
+    } while (0)
 
-            #define LL2AddTail(type, list, pItem)                               \
-                LL2AddTail_(type, &list.pHead, &list.pTail, list.offset, pItem)
-
-#define LL2RefAddTail(type, listRef, pItem)                             \
-            LL2AddTail_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
-
-    
-
-#define LL2Remove_(type, ppListHead, ppListTail, listOffset, pItem)     \
-            do {                                                        \
-                auto * node_ = LL2NodePtr_(type, pItem, listOffset);    \
-                if (!LL2IsItemLinked_(type, pItem, listOffset)) break;  \
-                type * pPrev_ = node_->pPrev;                           \
-                type * pNext_ = node_->pNext;                           \
-                bool hasNext_ = pNext_ != (type *)LLEndOfList_;         \
-                bool hasPrev_ = pPrev_ != (type *)LLEndOfList_;         \
-                if (hasNext_ && hasPrev_)                               \
-                {                                                       \
-                    LL2NodePtr_(type, pNext_, listOffset)->pPrev = pPrev_; \
-                    LL2NodePtr_(type, pPrev_, listOffset)->pNext = pNext_; \
-                }                                                       \
-                else if (hasNext_ && !hasPrev_)                         \
-                {                                                       \
-                    LL2NodePtr_(type, pNext_, listOffset)->pPrev = (type *)LLEndOfList_; \
-                    *ppListHead = pNext_;                               \
-                }                                                       \
-                else if (!hasNext_ && hasPrev_)                         \
-                {                                                       \
-                    LL2NodePtr_(type, pPrev_, listOffset)->pNext = (type *)LLEndOfList_; \
-                    *ppListTail = pPrev_;                               \
-                }                                                       \
-                else                                                    \
-                {                                                       \
-                    *ppListHead = nullptr;                              \
-                    *ppListTail = nullptr;                              \
-                }                                                       \
-                node_->pPrev = nullptr;                                 \
-                node_->pNext = nullptr;                                 \
-            } while(0)
-
-                #define LL2Remove(type, list, pItem)                                \
-                    LL2Remove_(type, &list.pHead, &list.pTail, list.offset, pItem)
-
-#define LL2RefRemove(type, listRef, pItem)                              \
-                LL2Remove_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pItem)
-
-
-
-#define LL2RemoveHead_(type, ppListHead, ppListTail, listOffset, pAssignTo) \
-                do {                                                    \
-                    type * headToRemove_ = *ppListHead;                 \
-                    pAssignTo = headToRemove_;                          \
-                    if (headToRemove_)                                  \
-                    {                                                   \
-                        auto * headToRemoveNode_ = LL2NodePtr_(type, headToRemove_, listOffset); \
-                        if (headToRemoveNode_->pNext != (type *)LLEndOfList_) \
-                        {                                               \
-                            *ppListHead = headToRemoveNode_->pNext;     \
-                            auto * newHeadNode_ = LL2NodePtr_(type, *ppListHead, listOffset); \
-                            newHeadNode_->pPrev = (type *)LLEndOfList_; \
-                        }                                               \
-                        else                                            \
-                        {                                               \
-                            *ppListHead = nullptr;                      \
-                            *ppListTail = nullptr;                      \
-                        }                                               \
-                        headToRemoveNode_->pNext = nullptr;             \
-                        headToRemoveNode_->pPrev = nullptr;             \
-                    }                                                   \
-                } while (0)
-
-                    #define LL2RemoveHead(type, list, pAssignTo)                            \
-LL2RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
+#define LL2RemoveHead(type, list, pAssignTo)                            \
+    LL2RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
 
 #define LL2RefRemoveHead(type, listRef, pAssignTo)                      \
     LL2RemoveHead_(type, listRef.ppHead, listRef.ppTail, listRef.offset, pAssignTo)
@@ -488,7 +508,7 @@ LL2RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
             {                                                           \
                 *ppListTail = tailToRemoveNode_->pPrev;                 \
                 auto * newTailNode_ = LL2NodePtr_(type, *ppListTail, listOffset); \
-                newTailNode_->pNext = (type *)LLEndOfList_;             \
+                newTailNode_->pNext = (type *)LLEndOfList_;              \
             }                                                           \
             else                                                        \
             {                                                           \
@@ -609,6 +629,33 @@ LL2RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
     ForLL2_(type, it, listRef.ppHead, listRef.offset)
 
 
+
+// NOTE - Do not try to use 'it' after calling this! Just let the loop run to the next iteration, at which
+//  point 'it' will work as you'd expect.
+#define LL2RemoveWhileIterating_(type, ppListHead, ppListTail, listOffset, it) \
+    do {                                                                \
+        if (it == *ppListHead)                                          \
+        {                                                               \
+            type * removedHead;                                         \
+            LL2RemoveHead_(type, ppListHead, ppListTail, listOffset, removedHead); \
+            /* @Hack - Make 'it' point to a fake location where we know the LL2Next_ call in ForLL2_ will get the right pointer value to the head! */ \
+            it = (type *)((unsigned char *)ppListHead - (listOffset + offsetof(type::LL2Node, pNext))); \
+        }                                                               \
+        else                                                            \
+        {                                                               \
+            type * itPrev = LL2Prev_(type, it, listOffset);             \
+            LL2Remove_(type, ppListHead, ppListTail, listOffset, it);   \
+            it = itPrev;                                                \
+        }                                                               \
+    } while (0)
+
+#define LL2RemoveWhileIterating(type, list, it)  \
+          LL2RemoveWhileIterating_(type, &list.pHead, &list.pTail, list.offset, it)
+
+#define LL2RefRemoveWhileIterating(type, listRef, it)                      \
+          LL2RemoveWhileIterating_(type, listRef.ppHead, listRef.ppTail, listRef.offset, it)
+
+
 // NOTE - This assumes that the newAddress has its intrusive pointers already set properly
 #define LL2Relocate_(type, ppListHead, ppListTail, listOffset, prevAddress, newAddress) \
     do {                                                                \
@@ -636,7 +683,7 @@ LL2RemoveHead_(type, &list.pHead, &list.pTail, list.offset, pAssignTo)
         }                                                               \
     } while (0)
 
-#define LL2Relocate(type, list, prevAddress, newAddress)                \
+#define LL2Relocate(type, list, prevAddress, newAddress) \
     LL2Relocate_(type, &list.pHead, &list.pTail, list.offset, prevAddress, newAddress)
 
 #define LL2RefRelocate(type, listRef, prevAddress, newAddress)          \
